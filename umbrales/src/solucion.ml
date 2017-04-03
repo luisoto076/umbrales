@@ -3,6 +3,7 @@ open Grafica
 let inicializa v = Random.init v
 let ant1 = ref 0
 let ant2 = ref 0
+let max_dist_path = ref 0.
 
 let vecino s =
 	let n = (Array.length s)-1 in
@@ -24,15 +25,17 @@ let permuta s =
 	
 let dmax g s = 
 	let n = Array.length s in
-	let max = ref 0.0 in
+	let maxs = ref 0.0 in
 	for i = 0 to n-2 do
-		try
-			let d = Grafica.getPeso g s.(i) s.(i+1) in
-			if !max<d then max:=d else () 
-		with
-			Not_found -> () 
+		for j = 1 to n-1 do
+			try
+				let d = Grafica.getPeso g s.(i) s.(j) in
+				if !maxs<d then maxs:=d else () 
+			with
+				Not_found -> ()
+		done 
 	done;
-	!max
+	max_dist_path:=!maxs
 
 let avg g s = 
 	let n = Array.length s in
@@ -54,12 +57,12 @@ let f g s =
 		try
 			total := !total +. Grafica.getPeso g s.(i) s.(i+1)
 		with
-			Not_found -> total:=!total +. ((dmax g s)*.Conf.c)
+			Not_found -> total:=!total +. (!max_dist_path*.Conf.c)
 	done;
 	!total/.prom
 
 let genera_solucion g n =
-	let s = Array.make 10 0 in
+	let s = Array.make n 0 in
 	let v = ref ((Random.int 277)+1) in
 	let visit = Array.make 278 false in
 	let i = ref 0 in
@@ -75,5 +78,16 @@ let genera_solucion g n =
 		i:=!i+1;
 	done;
 	s
+
+
+let factible g s =
+	let n = Array.length s in
+	let desc = ref 0 in
+	let b = ref true in
+	for i = 0 to n-2 do
+		if (Grafica.conectados g s.(i) s.(i+1)) then () else (b:=false;desc:=!desc+1)
+	done;
+	(!desc,!b)
+
 
                    

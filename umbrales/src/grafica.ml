@@ -35,10 +35,7 @@ Valida si es posible conectar dos nodos o si ya existe una arista que los une en
 @param ht hashtable que contiene vecinos
 @param e el elemento a buscar
 *)                   
-let valida ht e = try 
-                     let _ = Hashtbl.find ht e in false
-                  with 
-                     Not_found -> true
+let conectados g u v = Hashtbl.mem g.(u).vecinos v
                 
 (**
 conecta dos nodos de una grafica. Al conecta los nodos i y j se agrega a la entrada i del arreglo
@@ -51,12 +48,12 @@ let conecta g a b c = let n = (Array.length g)-1 in
                       if (a < 0 || a > n || b < 0 || b > n)
                       	then raise(ErrorGrafica "Se ingreso un indice inexistente")
                         else
-                        	let v1 = valida g.(a).vecinos b in
-                        	let v2 = valida g.(b).vecinos a in
+                        	let v1 = not (conectados g a b) in
+                        	let v2 = not (conectados g b a) in
                         	if v1 && v2
                         	then
                         		(Hashtbl.add g.(a).vecinos b c;
-                        		 Hashtbl.add  g.(b).vecinos a c)
+                        		 Hashtbl.add g.(b).vecinos a c)
                         	else
                         		raise(ErrorGrafica "Vertices ya conectados")
                             
