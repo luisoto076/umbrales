@@ -28,7 +28,7 @@ let orden = ref 0
   *)  
 let initgraf n =  Array.make n {id=0;nombre = "";pais="";poblacion=0;latitud=0.0;longitud=0.0;vecinos=Hashtbl.create 20}
 
-let agrega g v = g.(!tamano)<-v;tamano:=!tamano+1
+let agrega g v = tamano:=!tamano+1;g.(!tamano)<-v
 
 (**
 Valida si es posible conectar dos nodos o si ya existe una arista que los une en esa direccion
@@ -47,7 +47,7 @@ el par (j,p) donde p es el peso de la arista
 @param b vertice a conectar
 @param c peso de la arista que conecta a a y b
 *)                
-let conecta a b c g = let n = (Array.length g)-1 in
+let conecta g a b c = let n = (Array.length g)-1 in
                       if (a < 0 || a > n || b < 0 || b > n)
                       	then raise(ErrorGrafica "Se ingreso un indice inexistente")
                         else
@@ -55,8 +55,8 @@ let conecta a b c g = let n = (Array.length g)-1 in
                         	let v2 = valida g.(b).vecinos a in
                         	if v1 && v2
                         	then
-                        		((Hashtbl.add g.(a).vecinos b c);
-                        		(Hashtbl.add g.(b).vecinos a c))
+                        		(Hashtbl.add g.(a).vecinos b c;
+                        		 Hashtbl.add  g.(b).vecinos a c)
                         	else
                         		raise(ErrorGrafica "Vertices ya conectados")
                             
@@ -67,5 +67,12 @@ regresa el peso de la arsita entre dos nodos a partir del indice de ambos
 @param v verice
 *)
 let getPeso g u v = Hashtbl.find g.(u).vecinos v
+
+let get_vecinos v =
+	let vec = Array.make (Hashtbl.length v.vecinos) 0  in
+	let ind = ref 0 in
+	let aux u x k valu = u.(!x)<-k;x:=!x+1 in
+	Hashtbl.iter (aux vec ind) v.vecinos;
+	vec
 
 
