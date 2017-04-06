@@ -5,7 +5,7 @@ open Solucion
 let mejor_solucion = ref [|0|]
 let mejor_fs = ref max_float
 
-let calcula_lote g t s =
+let calcula_lote g t s co =
 	let c = ref 0 in
 	let r = ref 0.0 in
 	mejor_solucion := Array.copy s;
@@ -19,17 +19,20 @@ let calcula_lote g t s =
 			(if fs1 < !mejor_fs 
 			 then
 			 	(mejor_solucion := Array.copy s;
-				 mejor_fs := fs1)
-			 else();
-			 
-			 c := !c+1;
-			 r := !r+.fs1)
+				 mejor_fs := fs1;
+				 let par = factible g s in
+				 if snd par then
+				 	(Printf.fprintf co ("%f %d %b\n") fs1 (fst par) (snd par))
+				 else ();)
+			 else
+			 	c := !c+1;
+			 	r := !r+.fs1)
 		else 
 			(Solucion.regresa s)
 	done;
 	(!r/.(float_of_int Conf.l),s)
 	
-let aceptacion_por_umbrales g t s =
+let aceptacion_por_umbrales g t s co =
 	let p = ref (max_float /. 2.) in
 	let tp = ref t in
 	Printf.printf("%f\n%!") !tp;
@@ -37,7 +40,7 @@ let aceptacion_por_umbrales g t s =
 		let p1 = ref 0.0 in
 		(*Printf.printf("%f\n") !mejor_fs;*) 
 		while Conf.ep < (abs_float (!p -. !p1)) do
-			let par = calcula_lote g !tp s in
+			let par = calcula_lote g !tp s co in
 			p1:= !p;
 			p:= fst par
 		done;
@@ -64,27 +67,23 @@ let agrega_ciudad g row headers =
     		   } in
     Grafica.agrega g nodo
     
-let umbrales g s semilla =
-(*  	let semilla = int_of_string Sys.argv.(1) in*)
-	Solucion.inicializa semilla;
-(*	let s = Solucion.genera_solucion g (int_of_string Sys.argv.(2)) in*)
-	Solucion.permuta s;
-	aceptacion_por_umbrales g 4. s;
-	Array.iter (Printf.printf("%d%! ")) s;
-	Printf.printf ("\n %!");
-	Printf.printf("%f\n%!") !mejor_fs;
-	let g = Solucion.factible g s in
-	Printf.printf("%d %b\n%!") (fst g) (snd g)
-	
 let () =
+  	let semilla = int_of_string Sys.argv.(1) in
+  	let file = "archivo"^Sys.argv.(1)^".txt" in
+  	let oc = open_out file in    (* create or truncate file, return channel      *)
 	let db = Conexion_db.open_db_conection "data/insumos.db" in
 	let g = Grafica.initgraf 280 in
 	get_rows "cities" (agrega_ciudad g)  db;
 	get_rows "connections" (conecta_ciudad g) db;
+	Solucion.inicializa semilla;
+(*	let s = Solucion.genera_solucion g (int_of_string Sys.argv.(2)) in*)
 	let s = Conf.instancia in
 	Solucion.dmax g s;
 	Solucion.permuta s;
-	umbrales g s (int_of_string Sys.argv.(1))
-(*	for i = 20 to 200 do*)
-(*		umbrales g i*)
-(*	done*)
+	aceptacion_por_umbrales g 4. s oc;
+	Array.iter (Printf.printf("%d%! ")) s;
+	Printf.printf ("\n %!");
+	Printf.printf("%f\n%!") !mejor_fs;
+	let g = Solucion.factible g s in
+	Printf.printf("%d %b\n%!") (fst g) (snd g);
+	close_out oc

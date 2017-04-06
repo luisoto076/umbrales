@@ -1,14 +1,6 @@
 exception E of string
 open Sqlite3
 
-type ciudad = {
-				   nombre:string;
-				   pais:string;
-				   poblacion:int;
-				   latitud:float;
-				   longitud:float;
-				   vecinos: (int ,float) Hashtbl.t;
-    		   }
  
 let get o = match o with
 			|Some x -> x
