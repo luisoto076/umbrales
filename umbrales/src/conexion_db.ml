@@ -12,7 +12,7 @@ let get o = match o with
 funcion para obtener las entradas de una tabla y aplicar una funcion a cada
 fila que regresa como resultado
 @param tname nombre de la tabla
-@param lister palalala
+@param lister funcion que se aplicara a cada entrada de la tabla
 @param data estructura en que se guardan las filas
 @param db base de datos   
 *)
@@ -27,6 +27,7 @@ let get_rows tname lister db =
 (**
 abre la conexion a la base de datos
 @param db_name nombre de  la base de datos
+@return la base de datos 
 *)
 let open_db_conection db_name =
 	let db = Sqlite3.db_open db_name in
