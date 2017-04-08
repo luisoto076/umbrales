@@ -28,6 +28,12 @@ let orden = ref 0
   *)  
 let initgraf n =  Array.make n {id=0;nombre = "";pais="";poblacion=0;latitud=0.0;longitud=0.0;vecinos=Hashtbl.create 20}
 
+
+(**
+funcion para agregar una ciudad a la grafica
+@param g grafica a la que se agregara la ciudad
+@param v ciudad que se agregara
+*)
 let agrega g v = tamano:=!tamano+1;g.(!tamano)<-v
 
 (**
@@ -65,6 +71,11 @@ regresa el peso de la arsita entre dos nodos a partir del indice de ambos
 *)
 let getPeso g u v = Hashtbl.find g.(u).vecinos v
 
+(**
+funcion para obtener los vecinos de un verice
+@param v verice del que se obtendran los vecinos
+@return arreglo de indice de vecinos
+*)
 let get_vecinos v =
 	let vec = Array.make (Hashtbl.length v.vecinos) 0  in
 	let ind = ref 0 in

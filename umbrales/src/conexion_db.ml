@@ -1,3 +1,4 @@
+(**modulo para realizar la conexion a la base de datos*)
 exception E of string
 open Sqlite3
 
