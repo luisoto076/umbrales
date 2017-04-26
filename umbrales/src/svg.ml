@@ -1,6 +1,7 @@
 (**Modulo para generar las graficas del la solucion y el comportamiento de las evaluaciones*)
 open Printf
 open Grafica
+open Conf
 
 (*nombre del archivo que depende de el origen y destino de la ruta a calcular*)
 let file nombre t = nombre^t^".svg"
@@ -21,13 +22,13 @@ let creaLinea oc x1 y1 x2 y2 color =
 
 
 let creaLineaf oc x1 y1 x2 y2 color =
-	let c = 0.7 in
+	let c = 0.2 in
 	let k = 100. in
 	let xe1 = c *. x1 in
-	let ye1 = k *. y1 in
+	let ye1 = 1500. -. (k *. y1) in
 	let xe2 = c *. x2 in
-	let ye2 = k *. y2 in
-	Printf.fprintf oc "<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke=\"%s\" stroke-width=\"1\" />\n" xe1 ye1 xe2 ye2 color
+	let ye2 = 1500. -. (k *. y2) in
+	Printf.fprintf oc "<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke=\"%s\" stroke-width=\".8\" />\n" xe1 ye1 xe2 ye2 color
 
 
 (*Esqueleto que regresa una cadena para construir un circulo en svg, recive las cordenadas del
@@ -42,11 +43,11 @@ let creaCirculo oc x y r color =
 	Printf.fprintf oc "<circle cx=\"%f\" cy=\"%f\" r=\"%d\" stroke=\"black\" stroke-width=\"2\" fill=\"%s\" />\n" xe ye r color
 
 let creaCirculof oc x y r color =
-	let c = 0.7 in
+	let c = 0.2 in
 	let k = 100. in
 	let xe = c *. x  in
-	let ye = k *. y in
-	Printf.fprintf oc "<circle cx=\"%f\" cy=\"%f\" r=\"%d\" stroke=\"black\" stroke-width=\"1\" fill=\"%s\" />\n" xe ye r color
+	let ye = 1500. -. (k *. y) in
+	Printf.fprintf oc "<circle cx=\"%f\" cy=\"%f\" r=\"%d\" stroke=\"black\" stroke-width=\".8\" fill=\"%s\" />\n" xe ye r color
 
 (*Esqueleto que regresa una cadena para construir un componente de texto, recive las cordenadas del 
   centro del area de texto, el color del mismo y el contenido.
@@ -63,12 +64,12 @@ let svg oc g s =
 	let n = Array.length s in
 	encabezado oc 3500 1500;
 	for i = 0 to n-2 do
-		let u =  g.(s.(i)) in
-		let v =  g.(s.(i+1)) in
+		let u =  g.vertices.(s.(i)) in
+		let v =  g.vertices.(s.(i+1)) in
 		creaLinea oc u.longitud u.latitud v.longitud v.latitud "red"
 	done;
 	for i = 1 to 278 do
-		let u =  g.(i) in
+		let u =  g.vertices.(i) in
 		creaCirculo oc u.longitud u.latitud 4 "blue" 
 	done;
 	fprintf oc "\n</svg>"
@@ -76,18 +77,18 @@ let svg oc g s =
 (*funcion que guarda en el archivo indicado el svg*)
 let guarda g s t = 
   (* Write message to file *)
-  let oc = open_out (file "funcion" (string_of_int t))  in    
+  let oc = open_out (file (Conf.exp^"/funcion") (string_of_int t))  in    
   svg oc g s;  
   close_out oc
   
 let gfuncion arr t =
-	let oc = open_out (file "grafica" (string_of_int t))  in      
-	let n = (Hashtbl.length arr)/5000 in
+	let oc = open_out (file (Conf.exp^"/grafica") (string_of_int t))  in      
+	let n = (Hashtbl.length arr)/16000 in
 	let j = ref 1 in
-	encabezado oc 4000 1500;
-	for i = 1 to 4999 do
-		creaCirculof oc (float_of_int !j) (Hashtbl.find arr (n*i)) 4 "blue";
-		creaLineaf oc (float_of_int !j) (Hashtbl.find arr (n*i)) (float_of_int !j) (Hashtbl.find arr (n*(i+1))) "black";
+	encabezado oc 3500 1500;
+	for i = 1 to 16000-1 do
+		creaCirculof oc (float_of_int !j) (Hashtbl.find arr (n*i)) 1 "blue";
+(*		creaLineaf oc (float_of_int !j) (Hashtbl.find arr (n*i)) (float_of_int !j) (Hashtbl.find arr (n*(i+1))) "black";*)
 		j:=!j+1
 	done;
 	fprintf oc "\n</svg>";

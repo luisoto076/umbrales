@@ -12,7 +12,7 @@ let mejor_solucion = ref [|0|]
 let mejor_fs = ref max_float
 
 (**diccionario que guarda las evaluaciones de soluciones aceptadas*)
-let evals = Hashtbl.create 30
+(*let evals = Hashtbl.create 30*)
 
 (**variable que guarda el numero de soluciones aceptadas*)
 let aceptadas = ref 0
@@ -23,27 +23,27 @@ Funcion que va construyendo los lotes y regresando el promedio de la evaluacion 
 let calcula_lote g t s =
 	let c = ref 0 in
 	let r = ref 0.0 in
-	mejor_solucion := Array.copy s;
-	mejor_fs := Solucion.f g s;
+	mejor_solucion := Array.copy s.ruta;
 	while !c < Conf.l do 
 		let fs = Solucion.f g s in
 		Solucion.vecino s;
 		let fs1 = Solucion.f g s in
-		if fs1 < fs+.t
-		then
-			(if fs1 < !mejor_fs 
-			 then
-			 	(aceptadas := !aceptadas +1;
-			 	 Hashtbl.add evals !aceptadas fs1; 
-			 	 mejor_solucion := Array.copy s;
-				 mejor_fs := fs1)
-			 else();
-			 c := !c+1;
-			 r := !r+.fs1)
+		if fs1 < fs +. t then(
+			aceptadas := !aceptadas +1;
+(*			 Printf.fprintf oc "E:%f\n" fs1;*)
+(*			Hashtbl.add evals !aceptadas fs1;*)
+			if fs1 < !mejor_fs then( 
+(*				mejor_solucion := Array.copy s;*)
+				mejor_fs := fs1;
+			)
+			else();
+			c := !c+1;
+			r := !r+.fs1
+		)
 		else 
 			(Solucion.regresa s)
 	done;
-	(!r/.(float_of_int Conf.l),s)
+	!r/.(float_of_int Conf.l)
 
 (**
 funcion principal para la heristica
@@ -52,16 +52,16 @@ funcion principal para la heristica
 let aceptacion_por_umbrales g t s =
 	let p = ref (max_float /. 2.) in
 	let tp = ref t in
-	Printf.printf("%f\n%!") !tp;
+	Printf.printf("%F\n%!") !tp;
 	while Conf.et < !tp do
 		let p1 = ref 0.0 in 
-		while Conf.ep < (abs_float (!p -. !p1)) do
-			let par = calcula_lote g !tp s in
+		while (Conf.ep < (abs_float (!p -. !p1))) do
+			let aux = calcula_lote g !tp s in
 			p1:= !p;
-			p:= fst par
+			p:= aux
 		done;
 		tp:=Conf.phi *. !tp;
-		Printf.printf("%f\n%!") !tp		
+		Printf.printf("%F\n%!") !tp		
 	done 
 
 (**
@@ -89,9 +89,65 @@ let agrega_ciudad g row headers =
 				poblacion = int_of_string row.(3);
 				latitud = float_of_string row.(4);
 				longitud = float_of_string row.(5);
-				vecinos = Hashtbl.create 20;
     		   } in
     Grafica.agrega g nodo
+
+let porcentaje_aceptados g s t =
+	let acept = ref 0. in
+	for i = 1 to Conf.bloque do
+		let fs = Solucion.f g s in
+		Solucion.vecino s;
+		let fs1 = Solucion.f g s in
+		if fs1 < fs +.t then
+			acept := !acept +. 1.
+		else ()
+	done;
+	(!acept /. (float_of_int Conf.bloque))
+
+let rec busqueda_binaria g s t1 t2 p =
+	let tm = (t1 +. t2)/. 2. in
+	if (t2 -. t1) < Conf.ep 
+	then tm
+	else(
+		let p1 = porcentaje_aceptados g s tm in
+		if (abs_float (p -. p1)) < Conf.ep 
+		then 
+			tm
+		else(
+			if p1 > p 
+			then
+				(busqueda_binaria g s t1 tm p)
+			else 
+			    (busqueda_binaria g s tm t2 p) )
+		) 
+
+let temp_inicial g s t p =
+	let ti = ref t in
+	let t1 = ref 0. in
+	let t2 = ref 0. in
+	let p1 = ref (porcentaje_aceptados g s t) in
+	if (abs_float (p -. !p1)) < Conf.ep
+	then
+		t
+	else(
+		if !p1 < p then (
+			while !p1 < p do
+				ti := 2. *. !ti;
+				p1 := porcentaje_aceptados g s !ti			
+			done;
+			t1 := !ti /. 2.;
+			t2 := !ti 
+		) else(
+			while !p1 > p do
+				ti:= !ti /. 2.;
+				p1:= porcentaje_aceptados g s !ti	
+			done;
+			t1 := !ti;
+			t2 := !ti *. 2. 
+		);
+		(busqueda_binaria g s !t1 !t2 p)
+	)
+
 
 (**
 	funcion que realiza el preproceso para la heristica y registra los resultados
@@ -101,14 +157,16 @@ let agrega_ciudad g row headers =
 *)    
 let umbrales g s semilla =
 	Solucion.inicializa semilla;
-	Solucion.init_max_avg g s;
 	Solucion.permuta s;
-	let oc = open_out ("exp3/funcion"^(string_of_int semilla)^".txt")  in
-	aceptacion_por_umbrales g Conf.tem_inicial  s; 
-  	Printf.fprintf oc ("semilla: %d\n") semilla;    
+	let t_inicial = temp_inicial g s Conf.tem_inicial 0.95 in
+(*	let t_inicial = Conf.tem_inicial in*)
+	let oc = open_out (Conf.exp^"/funcion"^(string_of_int semilla)^".txt")  in
+	Solucion.inicializa semilla;
+	aceptacion_por_umbrales g t_inicial s;
+	Printf.fprintf oc ("semilla: %d\n") semilla;    
 	Array.iter (Printf.fprintf oc ("%d;%!")) !mejor_solucion;
 	Printf.fprintf  oc ("\n %!");
-	Printf.fprintf  oc ("%f\n%!") !mejor_fs;
+	Printf.fprintf oc ("%F\n%!") !mejor_fs;
 	let g = Solucion.factible g s in
 	Printf.fprintf oc ("desconexiones: %d\nfactible: %b\n Aceptadas: %d\n%!") (fst g) (snd g) !aceptadas;
 	close_out oc
@@ -146,6 +204,7 @@ let lee_solucion () =
     	close_in_noerr ic;           (* emergency closing *)
     	raise e                      (* exit with error: files are closed but
                                     channels are not flushed *)
+                                    
 
 	
 (**
@@ -155,13 +214,15 @@ let () =
 	let g = construye_grafica () in
 	let semilla = int_of_string Sys.argv.(1) in
 	Printf.printf ("inicio con semilla:%d\n%!") semilla;
-	let s = lee_solucion () in
-	Array.iter (Printf.printf ("%d,%!")) s;
+	let s = Solucion.init g (lee_solucion ()) in
+	Array.iter (Printf.printf ("%d,%!")) s.ruta;
 	Printf.printf("\n");
+	Printf.printf ("%F %F\n") s.max_dist_path s.avg_path;
+	Printf.printf("f:%F\n") (Solucion.f g s);
 (*	let s = Solucion.genera_solucion g (int_of_string Sys.argv.(2)) in*)
 	umbrales g s semilla;
 	Printf.printf ("termino con semilla:%d\n%!") semilla; 
-	Svg.gfuncion evals semilla;
-	Svg.guarda g s semilla
+(*	Svg.gfuncion evals semilla;*)
+	Svg.guarda g s.ruta semilla
 	
 

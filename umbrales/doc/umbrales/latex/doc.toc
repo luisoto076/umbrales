@@ -1,5 +1,0 @@
-\contentsline {section}{\numberline {1}Module {\tt {Conexion\_db}} : modulo para realizar la conexion a la base de datos}{1}
-\contentsline {section}{\numberline {2}Module {\tt {Grafica}} : Modulo para representar graficas de ciudades}{1}
-\contentsline {section}{\numberline {3}Module {\tt {Solucion}} : Modulo para operar las soluciones}{2}
-\contentsline {section}{\numberline {4}Module {\tt {Svg}} : Modulo para generar las graficas del la solucion y el comportamiento de las evaluaciones}{3}
-\contentsline {section}{\numberline {5}Module {\tt {Umbrales}} : Modulo principal que implementa la heristica de aceptacion por umbrales}{4}
